@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from apps.lab.routes.projects import router as projects_router
 from apps.api import health
 #from apps.marketplace.routes import marketplace
+from fastapi.middleware.cors import CORSMiddleware
+
 
 
 app = FastAPI(
@@ -12,8 +14,21 @@ app = FastAPI(
     contact={
         "name": "Wigor Rodrigues"})
 
-"""msg do que será enviado quando acessar a raiz da API"""
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://seu-site.vercel.app",
+        "https://wigorrodrigues.com.br",
+        "https://www.wigorrodrigues.com.br",
+        "https://portfolio-beryl-nine-a6rjccocx0.vercel.app/"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+"""msg do que será enviado quando acessar a raiz da API"""
 @app.get("/")
 def root():
     return {"message": "Welcome to the ComputHub API!"}
