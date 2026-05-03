@@ -59,12 +59,23 @@ class GitHubRepositoriesService:
     `	` limite de palavra
     """
 
-    def extract_project_type(self, readme_text: str) -> str | None:
-        pattern = r"\)\)\-\-COMPUTHUB\-\-\(\(\{.*?type\s*:\s*(\w+).*?\}"
+    def extract_project_metadata(self, readme_text: str) -> dict[str, str] | None:
+        pattern = r"\)\)\-\-COMPUTHUB\-\-\(\(\s*\{(?P<body>.*?)\}"
         match = re.search(pattern, readme_text, re.DOTALL)
         if not match:
             return None
-        return match.group(1)
+
+        body = match.group("body")
+        type_match = re.search(r"type\s*:\s*(\w+)", body)
+        status_match = re.search(r"status\s*:\s*(\w+)", body)
+
+        if not type_match:
+            return None
+
+        return {
+            "type": type_match.group(1),
+            "status": status_match.group(1) if status_match else "unknown",
+        }
     
     async def _fetch_projects_from_github(self, username: str) -> list[dict[str, Any]]:
         async with httpx.AsyncClient() as client:
@@ -86,13 +97,14 @@ class GitHubRepositoriesService:
 
                 content = readme_response.json().get("content", "")
                 readme_text = base64.b64decode(content).decode("utf-8", errors="ignore")
-                project_type = self.extract_project_type(readme_text)
+                project_metadata = self.extract_project_metadata(readme_text)
                 
-                if self.MARKER and project_type:
+                if self.MARKER and project_metadata:
                     projects.append(
                         {
                             "name": repositorie["name"],
-                            "type": project_type,
+                            "type": project_metadata["type"],
+                            "status": project_metadata["status"],
                             "description": repositorie.get("description", ""),
                             "created_at": repositorie["created_at"],
                             "url": repositorie["html_url"]
