@@ -28,10 +28,9 @@ class GitHubRepositoriesService:
 
     def _headersGITHUB(self) -> dict[str, Any]:
         token = os.getenv("GITHUB_TOKEN")
-        if token is None:
-            raise ValueError("GITHUB_TOKEN environment variable is not set.")
-        headers = {"Authorization": f"token {token}"}
-        return headers
+        if not token:
+            return {}
+        return {"Authorization": f"Bearer {token}"}
     
     def _is_cache_valid(self) -> bool:
         if not self._cache_projects:
