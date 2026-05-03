@@ -1,6 +1,6 @@
-#uvicorn main: apps.main:app --host 0.0.0.0 --port 8000
+#python -m uvicorn apps.main:app --host 0.0.0.0 --port 8000
 from fastapi import FastAPI
-from apps.lab.routes.projects import router as projects_router
+from apps.portfolio.routes import chem, dev
 from apps.api import health
 #from apps.marketplace.routes import marketplace
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +21,6 @@ app.add_middleware(
         "https://seu-site.vercel.app",
         "https://wigorrodrigues.com.br",
         "https://www.wigorrodrigues.com.br",
-        "https://portfolio-beryl-nine-a6rjccocx0.vercel.app/"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,4 +32,5 @@ app.add_middleware(
 def root():
     return {"message": "Welcome to the ComputHub API!"}
 
-app.include_router(projects_router)
+app.include_router(chem.router)
+app.include_router(dev.router)

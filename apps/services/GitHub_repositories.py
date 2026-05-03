@@ -36,7 +36,7 @@ class GitHubRepositoriesService:
     def _is_cache_valid(self) -> bool:
         if not self._cache_projects:
             return False
-        return (time.time() - self._cache_updated_at)
+        return (time.time() - self._cache_updated_at) < self.ttl_seconds
 
     """tabela com simbolos regex
     r""	string “crua” (Python não interpreta \)
@@ -63,7 +63,7 @@ class GitHubRepositoriesService:
         pattern = r"\)\)\-\-COMPUTHUB\-\-\(\(\{.*?type\s*:\s*(\w+).*?\}"
         match = re.search(pattern, readme_text, re.DOTALL)
         if not match:
-            return ValueError("Autor do projeto não colocou o type do projeto no readme")
+            return None
         return match.group(1)
     
     async def _fetch_projects_from_github(self, username: str) -> list[dict[str, Any]]:
@@ -79,13 +79,13 @@ class GitHubRepositoriesService:
             for repositorie in repositories:
                 readme_url = f"{self.GITHUB_API}/repos/{username}/{repositorie['name']}/readme"
                 readme_response = await client.get(readme_url, headers=self._headersGITHUB())
-                if readme_response.status_code is not 200:
+                if readme_response.status_code != 200:
                     continue
                     
                 """estamos pegando o readme vendo se tem aquela marcação acima para adicionar a lista de projetos"""
 
-                readme_text = readme_response.json().get("content", "")
-                
+                content = readme_response.json().get("content", "")
+                readme_text = base64.b64decode(content).decode("utf-8", errors="ignore")
                 project_type = self.extract_project_type(readme_text)
                 
                 if self.MARKER and project_type:
